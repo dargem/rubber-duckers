@@ -7,6 +7,8 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+config.json
+tokens.db
 .Python
 build/
 develop-eggs/
@@ -135,6 +137,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+env.json
 .env
 .envrc
 .venv
