@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 from .schemas import AppConfig, LLMConfig
 
 
-def load_config_from_json(config_path: str = "config.json") -> AppConfig:
+def load_config_from_json(config_path: str = "env.json") -> AppConfig:
     """Load configuration from a JSON file.
     
     Args:
@@ -41,6 +41,7 @@ def load_config_from_env() -> AppConfig:
     - ENVIRONMENT: App environment (default: development)
     - DEBUG: Debug mode (default: false)
     - LOG_LEVEL: Logging level (default: INFO)
+    - LLM_PROVIDER: LLM provider type (default: google)
     - GOOGLE_API_KEYS: Comma-separated list of Google API keys
     - LLM_MODEL: Model name (default: gemini-2.5-flash-lite)
     - LLM_TEMPERATURE: Temperature (default: 0.7)
@@ -64,6 +65,7 @@ def load_config_from_env() -> AppConfig:
     
     # Build LLM config
     llm_config = LLMConfig(
+        provider_type=os.getenv("LLM_PROVIDER", "google"),
         model_name=os.getenv("LLM_MODEL", "gemini-2.5-flash-lite"),
         temperature=float(os.getenv("LLM_TEMPERATURE", "0.7")),
         max_tokens=int(os.getenv("LLM_MAX_TOKENS")) if os.getenv("LLM_MAX_TOKENS") else None,
@@ -84,8 +86,6 @@ def load_config(config_path: str = "env.json") -> AppConfig:
     """Load configuration with fallback strategy.
     
     1. Try loading from JSON file
-    2. Fall back to environment variables
-    3. Raise error if neither works
     
     Args:
         config_path: Path to the config JSON file
@@ -100,40 +100,7 @@ def load_config(config_path: str = "env.json") -> AppConfig:
         # Try JSON file first
         return load_config_from_json(config_path)
     except (FileNotFoundError, ValueError) as json_error:
-        # Fall back to environment variables
-        try:
-            return load_config_from_env()
-        except ValueError as env_error:
-            raise ValueError(
-                f"Could not load config from file '{config_path}' ({json_error}) or environment variables ({env_error}). "
-                f"Please create a proper config file or set environment variables."
-            )
-
-
-def create_example_config(output_path: str = "env_example.json") -> None:
-    """Create an example configuration file.
-    
-    Args:
-        output_path: Where to save the example config
-    """
-    example_config = {
-        "environment": "development",
-        "debug": True,
-        "log_level": "DEBUG",
-        "llm": {
-            "model_name": "gemini-2.5-flash-lite",
-            "temperature": 0.7,
-            "max_tokens": None,
-            "api_keys": [
-                "google-api-key-1-here",
-                "google-api-key-2-here"
-            ],
-            "max_requests_per_key": 15
-        }
-    }
-    
-    with open(output_path, 'w') as f:
-        json.dump(example_config, f, indent=2)
-    
-    print(f"Example config created at: {output_path}")
-    print("Edit this file with your actual API keys and settings.")
+        raise(
+            f"Could not load config from file '{config_path}' ({json_error}). "
+            f"Please create a proper config file or set environment variables."
+        )

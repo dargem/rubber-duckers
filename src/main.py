@@ -4,9 +4,9 @@ import asyncio
 import logging
 from langchain.schema import HumanMessage
 
-from src.config import Container, load_config, create_example_config
-from src.providers import GoogleLLMProvider
-
+from src.config import Container, load_config
+from src.providers import LLMProvider
+from src.bots import BasicBot, Bot
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +33,6 @@ async def setup_container() -> Container:
     except Exception as e:
         logger.error(f"Failed to setup container: {e}")
         logger.info("Creating example config file...")
-        create_example_config()
         raise
 
 
@@ -42,8 +41,8 @@ async def test_llm_integration(container: Container) -> None:
     logger.info("Testing LLM integration...")
     
     try:
-        # Get the LLM provider
-        llm_provider = container.get(GoogleLLMProvider)
+        # Get the LLM provider (will be the appropriate one based on config)
+        llm_provider = container.get(LLMProvider)
         
         # Check health
         is_healthy = await llm_provider.health_check()
@@ -74,12 +73,15 @@ async def run_bot():
     try:
         # Setup dependency injection
         container = await setup_container()
-        
         # Test the core LLM functionality
         await test_llm_integration(container)
         
         # TODO: Add main bot logic here
         logger.info("Bot setup complete - ready for main logic implementation")
+
+        bot:Bot = container.get(BasicBot)
+        propaganda = await bot.run_bot()
+        print("Propaganda below:\n" + propaganda)
         
     except Exception as e:
         logger.error(f"Bot startup failed: {e}")

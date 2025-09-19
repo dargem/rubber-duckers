@@ -1,7 +1,7 @@
-from src.providers import APIKeyManager
+from src.providers import APIKeyManager, LLMProvider, LLMProviderFactory
 from . import AppConfig
 from typing import Dict, Any, Callable
-from src.providers import GoogleLLMProvider
+from src.bots import BasicBot
 
 class Container:
     """Dependency injection container using a registry of providers."""
@@ -17,44 +17,25 @@ class Container:
         self._instances.clear()
         self._providers.clear()
 
-        # Core providers for rubber-duckers
+        # Core providers
         self._providers[APIKeyManager] = lambda c: APIKeyManager(
             api_keys=config.llm.api_keys,
             max_usage_per_key=config.llm.max_requests_per_key,
         )
 
-        self._providers[GoogleLLMProvider] = lambda c: GoogleLLMProvider(
+        # Use factory to create the appropriate LLM provider based on config
+        self._providers[LLMProvider] = lambda c: LLMProviderFactory.create_provider(
+            config=config.llm,
             api_key_manager=c.get(APIKeyManager),
-            model_name=config.llm.model_name,
-            temperature=config.llm.temperature,
-            max_tokens=config.llm.max_tokens,
         )
 
-        # TODO: Add future providers as needed
+        # Bots Here
+        self._providers[BasicBot] = lambda c: BasicBot(
+            llm_provider=c.get(LLMProvider)
+        )
+
+        # TODO
         # self._providers[TwooterClient] = lambda c: TwooterClient(...)
-        # self._providers[DatabaseManager] = lambda c: DatabaseManager(...)
-        
-        # Commented out - these were from another project
-        # Factories depend on stats needs KG calls
-        #stats = await self.get_stats()
-        """
-        self._providers[IngestionWorkflowFactory] = lambda c: IngestionWorkflowFactory(
-            c.get(GoogleLLMProvider)
-            if config.environment != "testing"
-            else c.get(MockLLMProvider),
-            c.get(KnowledgeGraphManager),
-        )
-
-        self._providers[TranslationWorkflowFactory] = (
-            lambda c: TranslationWorkflowFactory(
-                c.get(GoogleLLMProvider)
-                if config.environment != "testing"
-                else c.get(MockLLMProvider),
-                c.get(KnowledgeGraphManager),
-                stats["config"]["max_feedback_loops"],
-            )
-        )
-        """
 
 
     def get(self, key: Any):
@@ -71,7 +52,7 @@ class Container:
         """Check health of core services."""
         results = {}
         try:
-            provider = self.get(GoogleLLMProvider)
+            provider = self.get(LLMProvider)
             results["llm_provider"] = await provider.health_check()
         except Exception as e:
             results["llm_provider"] = False
@@ -99,11 +80,12 @@ class Container:
         }
 
         try:
-            provider = self.get(GoogleLLMProvider)
+            provider = self.get(LLMProvider)
             if hasattr(provider.api_key_manager, "get_stats"):
                 stats["api_key_manager"] = await provider.api_key_manager.get_stats()
             stats["llm_provider"] = {
-                "available_keys": await provider.get_available_keys_count()
+                "available_keys": await provider.get_available_keys_count(),
+                "provider_type": self._config.llm.provider_type,
             }
         except Exception as e:
             stats["llm_provider_error"] = str(e)

@@ -7,11 +7,19 @@ from typing import List, Optional
 class LLMConfig(BaseModel):
     """Configuration for LLM providers."""
 
+    provider_type: str = Field(default="google")
     model_name: str = Field(default="gemini-2.5-flash-lite")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: Optional[int] = Field(default=None)
     api_keys: List[str] = Field(min_items=1)
     max_requests_per_key: int = Field(default=15, ge=1, le=100)
+
+    @field_validator("provider_type")
+    def validate_provider_type(cls, v):
+        allowed_providers = ["google", "openai", "anthropic", "ollama"]
+        if v.lower() not in allowed_providers:
+            raise ValueError(f"Provider type must be one of: {allowed_providers}")
+        return v.lower()
 
     @field_validator("api_keys")
     def validate_api_keys(cls, v):
@@ -23,10 +31,11 @@ class LLMConfig(BaseModel):
     def validate_model_name(cls, v):
         allowed_models = [
             "gemini-2.5-pro",
-            "gemini-2.5-flash",
+            "gemini-2.5-flash", 
             "gemini-2.5-flash-lite",
             "gemini-2.0-flash",
             "gemini-2.0-flash-lite",
+            # Add more models from different providers later
         ]
         if v not in allowed_models:
             raise ValueError(f"Model must be one of: {allowed_models}")

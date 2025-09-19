@@ -2,7 +2,7 @@
 
 from .schemas import AppConfig, LLMConfig
 from .container import Container
-from .loader import load_config, load_config_from_json, load_config_from_env, create_example_config
+from .loader import load_config, load_config_from_json, load_config_from_env
 
 __all__ = [
     "AppConfig",
@@ -11,5 +11,4 @@ __all__ = [
     "load_config",
     "load_config_from_json", 
     "load_config_from_env",
-    "create_example_config",
 ]
