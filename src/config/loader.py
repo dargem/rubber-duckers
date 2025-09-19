@@ -4,14 +4,15 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, Any, List
-from .schemas import AppConfig, LLMConfig
+from .schemas import AppConfig, LLMConfig, TweeterConfig
 
 
-def load_config_from_json(config_path: str = "env.json") -> AppConfig:
-    """Load configuration from a JSON file.
+def load_config_from_json(config_path: str = "env.json", bots_path: str = "bots.json") -> AppConfig:
+    """Load configuration from JSON files.
     
     Args:
-        config_path: Path to the config JSON file
+        config_path: Path to the main config JSON file
+        bots_path: Path to the bots config JSON file
         
     Returns:
         AppConfig instance
@@ -31,64 +32,25 @@ def load_config_from_json(config_path: str = "env.json") -> AppConfig:
     if "llm" not in config_data:
         raise ValueError(f"Config file {config_path} does not contain required 'llm' section")
     
+    # Load bots config if it exists
+    bots_file = Path(bots_path)
+    if bots_file.exists():
+        with open(bots_file, 'r') as f:
+            bots_data = json.load(f)
+        
+        # Add tweeter config to main config
+        config_data["tweeter"] = bots_data
+    
     return AppConfig(**config_data)
 
-
-def load_config_from_env() -> AppConfig:
-    """Load configuration from environment variables.
-    
-    Environment variables:
-    - ENVIRONMENT: App environment (default: development)
-    - DEBUG: Debug mode (default: false)
-    - LOG_LEVEL: Logging level (default: INFO)
-    - LLM_PROVIDER: LLM provider type (default: google)
-    - GOOGLE_API_KEYS: Comma-separated list of Google API keys
-    - LLM_MODEL: Model name (default: gemini-2.5-flash-lite)
-    - LLM_TEMPERATURE: Temperature (default: 0.7)
-    - LLM_MAX_TOKENS: Max tokens (default: None)
-    - MAX_REQUESTS_PER_KEY: Max requests per key (default: 15)
-    
-    Returns:
-        AppConfig instance
-        
-    Raises:
-        ValueError: If required environment variables are missing
-    """
-    # Get Google API keys (required)
-    api_keys_str = os.getenv("GOOGLE_API_KEYS")
-    if not api_keys_str:
-        raise ValueError("GOOGLE_API_KEYS environment variable is required")
-    
-    api_keys = [key.strip() for key in api_keys_str.split(",") if key.strip()]
-    if not api_keys:
-        raise ValueError("At least one valid API key must be provided")
-    
-    # Build LLM config
-    llm_config = LLMConfig(
-        provider_type=os.getenv("LLM_PROVIDER", "google"),
-        model_name=os.getenv("LLM_MODEL", "gemini-2.5-flash-lite"),
-        temperature=float(os.getenv("LLM_TEMPERATURE", "0.7")),
-        max_tokens=int(os.getenv("LLM_MAX_TOKENS")) if os.getenv("LLM_MAX_TOKENS") else None,
-        api_keys=api_keys,
-        max_requests_per_key=int(os.getenv("MAX_REQUESTS_PER_KEY", "15")),
-    )
-    
-    # Build app config
-    return AppConfig(
-        environment=os.getenv("ENVIRONMENT", "development"),
-        debug=os.getenv("DEBUG", "false").lower() in ("true", "1", "yes"),
-        log_level=os.getenv("LOG_LEVEL", "INFO"),
-        llm=llm_config,
-    )
-
-
-def load_config(config_path: str = "env.json") -> AppConfig:
+def load_config(config_path: str = "env.json", bots_path: str = "bots.json") -> AppConfig:
     """Load configuration with fallback strategy.
     
-    1. Try loading from JSON file
+    1. Try loading from JSON files
     
     Args:
-        config_path: Path to the config JSON file
+        config_path: Path to the main config JSON file
+        bots_path: Path to the bots config JSON file
         
     Returns:
         AppConfig instance
@@ -97,10 +59,10 @@ def load_config(config_path: str = "env.json") -> AppConfig:
         ValueError: If no valid configuration source is found
     """
     try:
-        # Try JSON file first
-        return load_config_from_json(config_path)
+        # Try JSON files first
+        return load_config_from_json(config_path, bots_path)
     except (FileNotFoundError, ValueError) as json_error:
-        raise(
+        raise ValueError(
             f"Could not load config from file '{config_path}' ({json_error}). "
             f"Please create a proper config file or set environment variables."
         )

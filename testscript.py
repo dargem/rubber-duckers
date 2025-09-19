@@ -10,7 +10,7 @@ def repost_or_unrepost(t, post_id: int):
         else:
             raise
 
-t = twooter.sdk.new()
+t = tweeter.sdk.new()
 t.login("Tristan", "dargem12931", display_name="Tristan")
 
 print(t.user_get("Tristan"))

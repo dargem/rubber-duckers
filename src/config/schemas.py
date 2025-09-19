@@ -14,6 +14,7 @@ class LLMConfig(BaseModel):
     api_keys: List[str] = Field(min_items=1)
     max_requests_per_key: int = Field(default=15, ge=1, le=100)
 
+    #TODO actually add these
     @field_validator("provider_type")
     def validate_provider_type(cls, v):
         allowed_providers = ["google", "openai", "anthropic", "ollama"]
@@ -35,11 +36,30 @@ class LLMConfig(BaseModel):
             "gemini-2.5-flash-lite",
             "gemini-2.0-flash",
             "gemini-2.0-flash-lite",
+            "gemini-1.5-flash-8b",
+            "gemini-1.5-flash",
+            "gemini-1.5-pro",
             # Add more models from different providers later
         ]
         if v not in allowed_models:
             raise ValueError(f"Model must be one of: {allowed_models}")
         return v
+
+    model_config = {"extra": "forbid"}
+
+
+class TweeterConfig(BaseModel):
+    """Configuration for Tweeter client."""
+    
+    login: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1) 
+    display_name: str = Field(..., min_length=1)
+
+    @field_validator("login", "password", "display_name")
+    def validate_non_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Field cannot be empty")
+        return v.strip()
 
     model_config = {"extra": "forbid"}
 
@@ -53,10 +73,7 @@ class AppConfig(BaseModel):
 
     # Core configurations - keep for rubber-duckers project
     llm: LLMConfig = Field(default_factory=LLMConfig)
-    
-    # Future features can be added here as needed:
-    # twooter: TwooterConfig = Field(default_factory=TwooterConfig)
-    # database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    tweeter: Optional[TweeterConfig] = Field(default=None)
 
     @field_validator("log_level")
     def validate_log_level(cls, v):

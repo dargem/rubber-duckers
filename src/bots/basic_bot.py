@@ -141,7 +141,8 @@ class BasicBot(Bot):
                 Pro-Castillo (character angle):
                 “Say what you want about Marina, but she’s run a massive business and delivered results. Compare that to Hawthorne, who’s been in politics forever and still hasn’t fixed anything. Easy choice.”
 
-                Now create a post based on information above, 3-4 lines maximum only including the posts output:
+                There is a hard cap of 255 characters, anymore and your response will be discarded.
+                Now create a post based on information above, 255 character maximum only including the posts output:
                 -----YOUR POST BELOW-----
                 """
             ),
@@ -156,5 +157,9 @@ class BasicBot(Bot):
         """
         message = HumanMessage(content=self.prompt.format())
         response = await self.llm_provider.invoke([message])
-        return response.strip()
+        if len(response.strip()) < 255:
+            return response.strip()
+        else:
+            print("bot did a too long response, remaking")
+            return await self.run_bot()
 

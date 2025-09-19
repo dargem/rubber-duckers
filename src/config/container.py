@@ -2,6 +2,7 @@ from src.providers import APIKeyManager, LLMProvider, LLMProviderFactory
 from . import AppConfig
 from typing import Dict, Any, Callable
 from src.bots import BasicBot
+from src.tweeter import TweeterClient
 
 class Container:
     """Dependency injection container using a registry of providers."""
@@ -34,8 +35,13 @@ class Container:
             llm_provider=c.get(LLMProvider)
         )
 
-        # TODO
-        # self._providers[TwooterClient] = lambda c: TwooterClient(...)
+        # TweeterClient - only if config is provided
+        if config.tweeter:
+            self._providers[TweeterClient] = lambda c: TweeterClient(
+                name=config.tweeter.login,
+                password=config.tweeter.password,
+                display_name=config.tweeter.display_name
+            )
 
 
     def get(self, key: Any):

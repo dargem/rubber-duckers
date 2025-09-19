@@ -138,6 +138,7 @@ celerybeat.pid
 
 # Environments
 env.json
+bots.json
 .env
 .envrc
 .venv
