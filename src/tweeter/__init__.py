@@ -2,6 +2,9 @@
 import twooter.sdk
 import asyncio
 import functools
+import logging
+
+logger = logging.getLogger(__name__)
 
 class TweeterClient:
     def __init__(self, name: str, password: str, display_name: str):
@@ -21,40 +24,41 @@ class TweeterClient:
 
     async def make_post(self, post: str):
         try:
-            print(f"Attempting to post: {post[:50]}...")
+            logger.info(f"Attempting to post ({len(post)} chars): {post[:100]}{'...' if len(post) > 100 else ''}")
             
-            # Wrap the synchronous post call with timeout
+            # Wrap the synchronous SDK calls with timeout
             loop = asyncio.get_event_loop()
+            
+            # Post with timeout (15 seconds)
             post_func = functools.partial(self.tweeter.post, post)
             
-            # 15 second timeout for posting
             response = await asyncio.wait_for(
                 loop.run_in_executor(None, post_func), 
                 timeout=15.0
             )
             
-            print(f"Post response: {response}")
             post_id = response["data"]["id"]
+            logger.info(f"Post successful! Post ID: {post_id}")
             
-            # Also wrap the like call with timeout
+            # Like with timeout (10 seconds)
             like_func = functools.partial(self.tweeter.post_like, post_id)
             await asyncio.wait_for(
                 loop.run_in_executor(None, like_func),
                 timeout=10.0
             )
             
+            logger.info(f"Auto-liked post {post_id}")
             return post_id
+            
         except asyncio.TimeoutError:
-            print("Error: Post request timed out")
-            raise Exception("Post request timed out - server may be slow or unreachable")
+            logger.error("Post request timed out after 15 seconds")
+            raise Exception("Post request timed out - server may be slow")
         except Exception as e:
-            print(f"Error making post: {e}")
-            print(f"Error type: {type(e)}")
+            logger.error(f"Failed to post: {e}")
             if hasattr(e, 'response'):
-                print(f"Response status: {e.response.status_code}")
-                print(f"Response content: {e.response.text}")
+                logger.error(f"Response status: {e.response.status_code}")
+                logger.error(f"Response content: {e.response.text}")
             raise
-
          
 
 """
@@ -72,7 +76,6 @@ def repost_or_unrepost(t, post_id: int):
             raise
 
 t = twooter.sdk.new()
-t.login("Tristan", "dargem12931", display_name="Tristan")
 
 print(t.user_get("Tristan"))
 t.user_me()

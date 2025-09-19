@@ -7,7 +7,7 @@ import time
 import random
 from src.config import Container, load_config
 from src.providers import LLMProvider
-from src.bots import BasicBot, Bot
+from src.bots import BasicBot, Bot, ViralBot
 from src.tweeter import TweeterClient
 
 # Configure logging
@@ -82,18 +82,39 @@ async def run_bot():
         
         logger.info("Bot setup complete")
 
-        bot:Bot = container.get(BasicBot)
-        print("bot gotten")
+        basic_bot:Bot = container.get(BasicBot)
+        viral_bot:Bot = container.get(ViralBot)
+        logger.info("Bot instance created successfully")
         tweeter: TweeterClient = container.get(TweeterClient)
-        print("tweet client got")
+        logger.info("TweeterClient instance created successfully")
+        
+        post_count = 0
         while True:
             try:
+                rand = random.randint(0,1)
+                if rand == 0:
+                    print("running normal")
+                    bot = basic_bot
+                else:
+                    print("running viral")
+                    bot = viral_bot
+                
+                post_count += 1
+                logger.info(f"Starting post generation #{post_count}")
+                
                 propaganda = await bot.run_bot()
-                print(propaganda)
-                tweeter.make_post(propaganda)
-                print("post made")
-                time.sleep(60+random.randrange(-20,20))
-            except:
+                logger.info(f"Content generated ({len(propaganda)} chars)")
+                
+                post_id = await tweeter.make_post(propaganda)
+                logger.info(f"Post #{post_count} successful! Post ID: {post_id}")
+                
+                sleep_time = 100 + random.randrange(-20, 20)
+                logger.info(f"Sleeping for {sleep_time} seconds until next post...")
+                time.sleep(sleep_time)
+                
+            except Exception as e:
+                logger.error(f"Post #{post_count} failed: {e}")
+                logger.info("Retrying in 20 seconds...")
                 time.sleep(20)
         
     except Exception as e:

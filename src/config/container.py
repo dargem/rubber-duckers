@@ -1,7 +1,7 @@
 from src.providers import APIKeyManager, LLMProvider, LLMProviderFactory
 from . import AppConfig
 from typing import Dict, Any, Callable
-from src.bots import BasicBot
+from src.bots import BasicBot, ViralBot
 from src.tweeter import TweeterClient
 
 class Container:
@@ -32,6 +32,10 @@ class Container:
 
         # Bots Here
         self._providers[BasicBot] = lambda c: BasicBot(
+            llm_provider=c.get(LLMProvider)
+        )
+
+        self._providers[ViralBot] = lambda c: ViralBot(
             llm_provider=c.get(LLMProvider)
         )
 
