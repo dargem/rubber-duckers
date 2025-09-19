@@ -3,7 +3,8 @@
 import asyncio
 import logging
 from langchain.schema import HumanMessage
-
+import time
+import random
 from src.config import Container, load_config
 from src.providers import LLMProvider
 from src.bots import BasicBot, Bot
@@ -69,7 +70,7 @@ async def test_llm_integration(container: Container) -> None:
 
 async def run_bot():
     """Main bot entry point."""
-    logger.info("Starting rubber-duckers bot...")
+    logger.info("Starting bot...")
     
     try:
         # Setup dependency injection
@@ -79,23 +80,21 @@ async def run_bot():
         await test_llm_integration(container)
         print("llm tested")
         
-        # TODO: Add main bot logic here
-        logger.info("Bot setup complete - ready for main logic implementation")
+        logger.info("Bot setup complete")
 
         bot:Bot = container.get(BasicBot)
         print("bot gotten")
-        
-        # Add timeout for bot execution in case LLM hangs
-        try:
-            propaganda = await asyncio.wait_for(bot.run_bot(), timeout=60.0)
-            print(f"Generated propaganda ({len(propaganda)} chars): {propaganda}")
-        except asyncio.TimeoutError:
-            logger.error("Bot execution timed out after 60 seconds")
-            return 1
         tweeter: TweeterClient = container.get(TweeterClient)
         print("tweet client got")
-        await tweeter.make_post(propaganda)
-        print("post made")
+        while True:
+            try:
+                propaganda = await bot.run_bot()
+                print(propaganda)
+                tweeter.make_post(propaganda)
+                print("post made")
+                time.sleep(60+random.randrange(-20,20))
+            except:
+                time.sleep(20)
         
     except Exception as e:
         logger.error(f"Bot startup failed: {e}")
