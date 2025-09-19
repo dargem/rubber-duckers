@@ -1,5 +1,6 @@
 from .base import Bot
 from src.providers import LLMProvider
+from tweeter import QueryAgent
 from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage
 from textwrap import dedent
@@ -7,12 +8,14 @@ from textwrap import dedent
 class NewsBot(Bot):
     """A basic bot that generates pro republican posts, will make it using trending topics WIP"""
 
-    def __init__(self,llm_provider: LLMProvider):
+    def __init__(self,llm_provider: LLMProvider, query_agent: QueryAgent):
         """
         Args:
             LLM Provider interface for llms
         """
+
         self.llm_provider = llm_provider
+        self.query_agent = query_agent
         self.prompt = PromptTemplate(
             template=dedent(
                 """
@@ -141,11 +144,12 @@ class NewsBot(Bot):
                 Pro-Castillo (character angle):
                 “Say what you want about Marina, but she’s run a massive business and delivered results. Compare that to Hawthorne, who’s been in politics forever and still hasn’t fixed anything. Easy choice.”
 
+                Have calls for engagement on news articles like, "what do you think"
                 
                 There is a hard cap of 255 characters, anymore and your response will be discarded.
                 Now create a post based on information above, 255 character maximum only including the posts output:
 
-                A recent new headline is, spin it in favour of Marina Castillo. If irrelevant to politics just create a post you think will generate maximum engagement:
+                A recent new headline is below, create a post that talks about the news. If irrelevant to politics just create an apolitical post you think will generate maximum engagement:
                 {news}
                 -----YOUR POST BELOW-----
                 """
@@ -159,7 +163,8 @@ class NewsBot(Bot):
         Returns:
             LLM response as a string
         """
-        message = HumanMessage(content=self.prompt.format())
+        article = self.query_agent.get_random_news_article()
+        message = HumanMessage(content=self.prompt.format(news=article))
         response = await self.llm_provider.invoke([message])
         if len(response.strip()) < 255:
             return response.strip()

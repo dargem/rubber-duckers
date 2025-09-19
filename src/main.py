@@ -7,8 +7,8 @@ import time
 import random
 from src.config import Container, load_config
 from src.providers import LLMProvider
-from src.bots import BasicBot, Bot, ViralBot
-from src.tweeter import TweeterClient
+from src.bots import BasicBot, Bot, ViralBot, NewsBot
+from src.tweeter import TweeterClient, QueryAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -84,20 +84,28 @@ async def run_bot():
 
         basic_bot:Bot = container.get(BasicBot)
         viral_bot:Bot = container.get(ViralBot)
+        news_bot:Bot = container.get(NewsBot)
         logger.info("Bot instance created successfully")
         tweeter: TweeterClient = container.get(TweeterClient)
         logger.info("TweeterClient instance created successfully")
-        
+
         post_count = 0
         while True:
             try:
-                rand = random.randint(0,1)
+                rand = random.randint(0,2)
                 if rand == 0:
                     print("running normal")
                     bot = basic_bot
-                else:
+                elif rand == 1:
                     print("running viral")
                     bot = viral_bot
+                else:
+                    print("running news bot")
+                    bot = news_bot
+
+                print("temp override to news for testing")
+                bot = news_bot
+
                 
                 post_count += 1
                 logger.info(f"Starting post generation #{post_count}")

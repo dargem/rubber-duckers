@@ -2,9 +2,11 @@
 from .base import Bot
 from .basic_bot import BasicBot
 from .viral_bot import ViralBot
+from .news_bot import NewsBot
 
 __all__ = [
     "Bot",
     "BasicBot",
     "ViralBot",
+    "NewsBot",
 ]
