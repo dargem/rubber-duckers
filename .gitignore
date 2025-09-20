@@ -6,7 +6,7 @@ post_logger.json
 persona.db
 # C extensions
 *.so
-
+test.py
 # Distribution / packaging
 config.json
 tokens.db

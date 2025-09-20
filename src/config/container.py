@@ -61,7 +61,7 @@ class Container:
             name=account['login'],
             password=account['password'],
             display_name=account['display_name'],
-            member_email=account['member_email']
+            invite_code=account['invite_code']
         )
 
     def _create_query_agent(self, container):
@@ -72,7 +72,7 @@ class Container:
             name=account['login'],
             password=account['password'],
             display_name=account['display_name'],
-            member_email=account['member_email']
+            invite_code=account['invite_code']
         )
 
 

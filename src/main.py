@@ -104,9 +104,6 @@ async def run_bot():
                     print("running news bot")
                     bot = news_bot
 
-                print("temp override to news for testing")
-                bot = news_bot
-
                 
                 post_count += 1
                 logger.info(f"Starting post generation #{post_count}")

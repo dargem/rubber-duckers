@@ -147,6 +147,7 @@ class ViralBot(Bot):
 
                 There is a hard cap of 255 characters, anymore and your response will be discarded.
                 Now create a post based on information above, 255 character maximum only including the posts output:
+                Only add the post with nothing before it below
                 -----YOUR POST BELOW-----
                 """
             ),

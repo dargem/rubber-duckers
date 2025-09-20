@@ -151,6 +151,8 @@ class NewsBot(Bot):
 
                 A recent new headline is below, create a post that talks about the news. If irrelevant to politics just create an apolitical post you think will generate maximum engagement:
                 {news}
+                
+                Only add the post with nothing before it below
                 -----YOUR POST BELOW-----
                 """
             ),

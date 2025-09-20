@@ -7,14 +7,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 class TweeterClient:
-    def __init__(self, name: str, password: str, display_name: str, member_email: str):
+    def __init__(self, name: str, password: str, display_name: str, invite_code: str):
         self.name = name
         self.password = password
         self.display_name = display_name
-        self.member_email = member_email
+        self.invite_code = invite_code
 
         tweeter = twooter.sdk.new()
-        tweeter.login(name, password, display_name=display_name, member_email=member_email)
+        tweeter.login(username=name, password=password, display_name=display_name, invite_code=invite_code)
         self.tweeter = tweeter
 
         """
