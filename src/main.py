@@ -114,14 +114,14 @@ async def run_bot():
                 post_id = await tweeter.make_post(propaganda)
                 logger.info(f"Post #{post_count} successful! Post ID: {post_id}")
                 
-                sleep_time = 30 + random.randrange(-20, 20)
+                sleep_time = 50 + random.randrange(-20, 20)
                 logger.info(f"Sleeping for {sleep_time} seconds until next post...")
                 time.sleep(sleep_time)
                 
             except Exception as e:
                 logger.error(f"Post #{post_count} failed: {e}")
                 logger.info("Retrying in 20 seconds...")
-                time.sleep(20)
+                time.sleep(10)
         
     except Exception as e:
         logger.error(f"Bot startup failed: {e}")

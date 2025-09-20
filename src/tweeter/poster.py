@@ -7,15 +7,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 class TweeterClient:
-    def __init__(self, name: str, password: str, display_name: str, invite_code: str):
-        self.name = name
-        self.password = password
-        self.display_name = display_name
-        self.invite_code = invite_code
-
-        tweeter = twooter.sdk.new()
-        tweeter.login(username=name, password=password, display_name=display_name, invite_code=invite_code)
-        self.tweeter = tweeter
+    def __init__(self, account_provider):
+        self.account_provider = account_provider
 
         """
         existence_check = tweeter.user_get(name)
@@ -24,6 +17,8 @@ class TweeterClient:
         """
 
     async def make_post(self, post: str):
+        tweeter = self.account_provider.get_account() # handles login and rotation
+        print(tweeter.user_me())
         try:
             logger.info(f"Attempting to post ({len(post)} chars): {post[:100]}{'...' if len(post) > 100 else ''}")
             
@@ -31,7 +26,7 @@ class TweeterClient:
             loop = asyncio.get_event_loop()
             
             # Post with timeout (15 seconds)
-            post_func = functools.partial(self.tweeter.post, post)
+            post_func = functools.partial(tweeter.post, post)
             
             response = await asyncio.wait_for(
                 loop.run_in_executor(None, post_func), 
@@ -41,12 +36,14 @@ class TweeterClient:
             post_id = response["data"]["id"]
             logger.info(f"Post successful! Post ID: {post_id}")
             
-            # Like with timeout (10 seconds)
-            like_func = functools.partial(self.tweeter.post_like, post_id)
-            await asyncio.wait_for(
-                loop.run_in_executor(None, like_func),
-                timeout=10.0
-            )
+            tasks = []
+            accounts = self.account_provider.get_all_accounts()
+            for tweeter_bot in accounts:
+                like_func = functools.partial(tweeter_bot.post_like, post_id)
+                task = asyncio.wait_for(loop.run_in_executor(None, like_func), timeout=10.0)
+                tasks.append(task)
+
+            results = await asyncio.gather(*tasks, return_exceptions=True)
             
             logger.info(f"Auto-liked post {post_id}")
             return post_id

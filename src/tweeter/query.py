@@ -6,15 +6,9 @@ from bs4 import BeautifulSoup
 import random
 
 class QueryAgent:
-    def __init__(self, name: str, password: str, display_name: str, invite_code: str):
-        print(name + password + display_name + invite_code)
-        self.name = name
-        self.password = password
-        self.display_name = display_name
-
-        tweeter = twooter.sdk.new()
-        tweeter.login(username=name, password=password, display_name=display_name, invite_code=invite_code)
-        self.query = tweeter
+    def __init__(self, account_provider):
+        self.account_provider = account_provider
+        self.query = self.account_provider.get_account()
 
     def get_trending(self):
         self.query.feed("trending")

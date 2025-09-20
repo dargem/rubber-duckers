@@ -54,26 +54,14 @@ class Container:
         self._providers[QueryAgent] = lambda c: self._create_query_agent(c)
 
     def _create_tweeter_client(self, container):
-        """Create TweeterClient with account from AccountProvider."""
+        """Create TweeterClient with AccountProvider."""
         account_provider = container.get(AccountProvider)
-        account = account_provider.get_account()
-        return TweeterClient(
-            name=account['login'],
-            password=account['password'],
-            display_name=account['display_name'],
-            invite_code=account['invite_code']
-        )
+        return TweeterClient(account_provider=account_provider)
 
     def _create_query_agent(self, container):
-        """Create QueryAgent with account from AccountProvider."""
+        """Create QueryAgent with AccountProvider."""
         account_provider = container.get(AccountProvider)
-        account = account_provider.get_account()
-        return QueryAgent(
-            name=account['login'],
-            password=account['password'],
-            display_name=account['display_name'],
-            invite_code=account['invite_code']
-        )
+        return QueryAgent(account_provider=account_provider)
 
 
     def get(self, key: Any):
