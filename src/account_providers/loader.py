@@ -5,6 +5,7 @@ from typing import Optional, List
 from pathlib import Path
 import twooter.sdk
 from twooter import Twooter
+from time import sleep
 
 class AccountProvider():
     def __init__(self):
@@ -27,12 +28,18 @@ class AccountProvider():
         for bot_data in bots_data:
             if all(key in bot_data for key in ["user_name", "password", "display_name"]):
                 tweeter = twooter.sdk.new()
-                login_result = tweeter.login(
-                    username=bot_data["user_name"], 
-                    password=bot_data["password"], 
-                    display_name=bot_data["display_name"],
-                    invite_code=invite_code
-                )
+                while True :
+                    try:
+                        login_result = tweeter.login(
+                            username=bot_data["user_name"], 
+                            password=bot_data["password"], 
+                            display_name=bot_data["display_name"],
+                            invite_code=invite_code
+                        )
+                        break
+                    except:
+                        sleep(10)
+
                 # Store the tweeter instance, not the login result
                 self._bots.append(tweeter)
             else:
