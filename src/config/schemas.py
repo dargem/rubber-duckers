@@ -48,17 +48,17 @@ class LLMConfig(BaseModel):
     model_config = {"extra": "forbid"}
 
 
-class TweeterConfig(BaseModel):
-    """Configuration for Tweeter client."""
+class UserConfig(BaseModel):
+    """Configuration for the user account (from .env)."""
     
-    login: str = Field(..., min_length=1)
-    password: str = Field(..., min_length=1) 
     display_name: str = Field(..., min_length=1)
+    email: Optional[str] = Field(default=None)
+    password: Optional[str] = Field(default=None)
 
-    @field_validator("login", "password", "display_name")
-    def validate_non_empty(cls, v):
+    @field_validator("display_name")
+    def validate_display_name(cls, v):
         if not v.strip():
-            raise ValueError("Field cannot be empty")
+            raise ValueError("Display name cannot be empty")
         return v.strip()
 
     model_config = {"extra": "forbid"}
@@ -73,7 +73,8 @@ class AppConfig(BaseModel):
 
     # Core configurations - keep for rubber-duckers project
     llm: LLMConfig = Field(default_factory=LLMConfig)
-    tweeter: Optional[TweeterConfig] = Field(default=None)
+    user: Optional[UserConfig] = Field(default=None)
+    # Note: Bot accounts are now managed by AccountProvider, not config
 
     @field_validator("log_level")
     def validate_log_level(cls, v):
@@ -82,4 +83,4 @@ class AppConfig(BaseModel):
             raise ValueError(f"Log level must be one of: {allowed_levels}")
         return v.upper()
 
-    model_config = {"extra": "forbid"}
+    model_config = {"extra": "ignore"}  # Allow extra fields for AccountProvider migration

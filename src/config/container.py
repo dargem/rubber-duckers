@@ -3,6 +3,7 @@ from . import AppConfig
 from typing import Dict, Any, Callable
 from src.bots import BasicBot, ViralBot, NewsBot
 from src.tweeter import TweeterClient, QueryAgent
+from src.account_providers import AccountProvider
 
 
 class Container:
@@ -31,6 +32,9 @@ class Container:
             api_key_manager=c.get(APIKeyManager),
         )
 
+        # Account provider for managing multiple bot accounts
+        self._providers[AccountProvider] = lambda c: AccountProvider()
+
         # Bots Here
         self._providers[BasicBot] = lambda c: BasicBot(
             llm_provider=c.get(LLMProvider)
@@ -45,17 +49,30 @@ class Container:
             query_agent=c.get(QueryAgent)
         )
 
-        # API access
-        self._providers[TweeterClient] = lambda c: TweeterClient(
-            name=config.tweeter.login,
-            password=config.tweeter.password,
-            display_name=config.tweeter.display_name
+        # API access - now uses AccountProvider to get current account
+        self._providers[TweeterClient] = lambda c: self._create_tweeter_client(c)
+        self._providers[QueryAgent] = lambda c: self._create_query_agent(c)
+
+    def _create_tweeter_client(self, container):
+        """Create TweeterClient with account from AccountProvider."""
+        account_provider = container.get(AccountProvider)
+        account = account_provider.get_account()
+        return TweeterClient(
+            name=account['login'],
+            password=account['password'],
+            display_name=account['display_name'],
+            member_email=account['member_email']
         )
 
-        self._providers[QueryAgent] = lambda c: QueryAgent(  
-            name=config.tweeter.login,
-            password=config.tweeter.password,
-            display_name=config.tweeter.display_name     
+    def _create_query_agent(self, container):
+        """Create QueryAgent with account from AccountProvider."""
+        account_provider = container.get(AccountProvider)
+        account = account_provider.get_account()
+        return QueryAgent(
+            name=account['login'],
+            password=account['password'],
+            display_name=account['display_name'],
+            member_email=account['member_email']
         )
 
 

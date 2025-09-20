@@ -6,13 +6,14 @@ from bs4 import BeautifulSoup
 import random
 
 class QueryAgent:
-    def __init__(self, name: str, password: str, display_name: str):
+    def __init__(self, name: str, password: str, display_name: str, member_email):
+        print(name + password + display_name)
         self.name = name
         self.password = password
         self.display_name = display_name
 
         tweeter = twooter.sdk.new()
-        tweeter.login(name, password, display_name=display_name)
+        tweeter.login(name, password, display_name=display_name, member_email=member_email)
         self.query = tweeter
 
     def get_trending(self):

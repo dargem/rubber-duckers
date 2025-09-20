@@ -1,6 +1,6 @@
 from .base import Bot
 from src.providers import LLMProvider
-from tweeter import QueryAgent
+from src.tweeter import QueryAgent
 from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage
 from textwrap import dedent

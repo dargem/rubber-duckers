@@ -2,7 +2,8 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
+post_logger.json
+persona.db
 # C extensions
 *.so
 

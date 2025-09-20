@@ -5,7 +5,7 @@ import logging
 from langchain.schema import HumanMessage
 import time
 import random
-from src.config import Container, load_config
+from src.config import get_container, load_config
 from src.providers import LLMProvider
 from src.bots import BasicBot, Bot, ViralBot, NewsBot
 from src.tweeter import TweeterClient, QueryAgent
@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def setup_container() -> Container:
+async def setup_container():
     """Initialize the dependency injection container."""
     try:
         # Load configuration
@@ -25,7 +25,8 @@ async def setup_container() -> Container:
         # Set log level from config
         logging.getLogger().setLevel(getattr(logging, config.log_level))
         
-        # Initialize container
+        # Initialize container (lazy load to avoid circular imports)
+        Container = get_container()
         container = Container()
         await container.set_config(config)
         
@@ -38,7 +39,7 @@ async def setup_container() -> Container:
         raise
 
 
-async def test_llm_integration(container: Container) -> None:
+async def test_llm_integration(container) -> None:
     """Test the LLM integration with key rotation."""
     logger.info("Testing LLM integration...")
     
@@ -116,7 +117,7 @@ async def run_bot():
                 post_id = await tweeter.make_post(propaganda)
                 logger.info(f"Post #{post_count} successful! Post ID: {post_id}")
                 
-                sleep_time = 100 + random.randrange(-20, 20)
+                sleep_time = 30 + random.randrange(-20, 20)
                 logger.info(f"Sleeping for {sleep_time} seconds until next post...")
                 time.sleep(sleep_time)
                 
