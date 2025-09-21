@@ -150,7 +150,7 @@ class NewsBot(Bot):
                 There is a hard cap of 255 characters, anymore and your response will be discarded.
                 Now create a post based on information above, 255 character maximum only including the posts output:
 
-                A recent new headline is below, create a post that talks about the news. If irrelevant to politics just create an apolitical post you think will generate maximum engagement:
+                A recent new headline is below, create a social media post that summarises this news. If irrelevant to politics just create an apolitical post you think will generate maximum engagement:
                 {news}
                 
                 Only add the post with nothing before it below

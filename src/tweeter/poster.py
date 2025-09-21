@@ -18,35 +18,45 @@ class TweeterClient:
             raise 
         """
 
-    async def _auto_like_with_all_accounts(
+    async def _auto_like_and_retreat_with_all_accounts(
         self, post_id: int, posting_account_username: str
     ):
-        """Helper method to auto-like a post with all accounts except the posting account."""
+        """Helper method to auto-like and repost a post with all accounts except the posting account."""
         accounts = self.account_provider.get_all_accounts()
-        logger.info(f"Starting auto-like with {len(accounts)} accounts...")
+        logger.info(f"Starting auto-like/repost with {len(accounts)} accounts...")
 
         loop = asyncio.get_event_loop()
         tasks = []
 
         for i, tweeter_bot in enumerate(accounts):
-            # Get account info for this bot
             try:
                 bot_info = tweeter_bot.user_me()
                 bot_username = bot_info["data"]["username"]
 
-                # Skip the posting account to avoid self-liking (optional - commented out)
-                # if bot_username == posting_account_username:
-                #     logger.info(f"Account #{i+1} ({bot_username}) - SKIPPING (posting account, can't self-like)")
-                #     continue
-
-                logger.info(f"Account #{i + 1} ({bot_username}) - QUEUED for liking")
-                like_func = functools.partial(tweeter_bot.post_like, post_id)
-                task = asyncio.wait_for(
-                    loop.run_in_executor(None, like_func), timeout=10.0
+                # Always like
+                logger.info(f"Account #{i + 1} ({bot_username}) - QUEUED for like")
+                like_task = asyncio.wait_for(
+                    loop.run_in_executor(None, functools.partial(tweeter_bot.post_like, post_id)),
+                    timeout=10.0,
                 )
-                tasks.append((i, bot_username, task))
+                tasks.append((i, bot_username, "like", like_task))
+
+                # Repost only if not the posting account
+                if bot_username != posting_account_username:
+                    logger.info(f"Account #{i + 1} ({bot_username}) - QUEUED for repost")
+                    repost_task = asyncio.wait_for(
+                        loop.run_in_executor(None, functools.partial(tweeter_bot.post_repost, post_id)),
+                        timeout=10.0,
+                    )
+                    tasks.append((i, bot_username, "repost", repost_task))
+
             except Exception as e:
                 logger.error(f"Failed to get info for account #{i + 1}: {e}")
+
+        # Run all the tasks concurrently
+        results = await asyncio.gather(*(t[3] for t in tasks), return_exceptions=True)
+        return results
+
 
         # Execute all likes and track results
         if tasks:
@@ -79,6 +89,8 @@ class TweeterClient:
                 "No eligible accounts for auto-liking (all accounts filtered out)"
             )
             return 0
+        
+
 
     async def make_post(self, post: str) -> int:
         tweeter = self.account_provider.get_account()  # handles login and rotation
@@ -107,7 +119,7 @@ class TweeterClient:
             logger.info(f"Post created by account: {posting_username}")
 
             # Auto-like with all accounts using helper method
-            await self._auto_like_with_all_accounts(post_id, posting_username)
+            await self._auto_like_and_retreat_with_all_accounts(post_id, posting_username)
 
             return post_id
 
@@ -147,7 +159,10 @@ class TweeterClient:
             logger.info(f"Reply created by account: {replying_username}")
 
             # Auto-like the reply with all accounts using helper method
-            await self._auto_like_with_all_accounts(reply_id, replying_username)
+            try:
+                await self._auto_like_and_retreat_with_all_accounts(reply_id, replying_username)
+            except:
+                logger.error(f"Failed to auto like with all accounts, continuing")
 
             return reply_id
 
