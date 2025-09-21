@@ -4,12 +4,13 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage
 from textwrap import dedent
 
+
 class ViralBot(Bot):
     """A basic bot that generates pro republican posts
     Tries to do clickbait/personal stories
     """
 
-    def __init__(self,llm_provider: LLMProvider):
+    def __init__(self, llm_provider: LLMProvider):
         """
         Args:
             LLM Provider interface for llms
@@ -167,4 +168,3 @@ class ViralBot(Bot):
         else:
             print("bot did a too long response, remaking")
             return await self.run_bot()
-

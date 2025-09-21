@@ -4,11 +4,12 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage
 from textwrap import dedent
 import time
-class ResponseBot(Bot):
-    """A basic bot that responds to the posts of another bot
-    """
 
-    def __init__(self,llm_provider: LLMProvider):
+
+class ResponseBot(Bot):
+    """A basic bot that responds to the posts of another bot"""
+
+    def __init__(self, llm_provider: LLMProvider):
         """
         Args:
             LLM Provider interface for llms
@@ -155,7 +156,7 @@ class ResponseBot(Bot):
             ),
         )
 
-    async def run_bot(self, post:str) -> str:
+    async def run_bot(self, post: str) -> str:
         """
         Runs the bot, returning its response
 
@@ -170,4 +171,3 @@ class ResponseBot(Bot):
         else:
             print("bot did a too long response, remaking")
             return await self.run_bot(post)
-

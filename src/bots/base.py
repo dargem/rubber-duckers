@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from src.providers import LLMProvider
 
+
 class Bot(ABC):
     """Abstract interface for bots"""
 

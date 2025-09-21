@@ -1,9 +1,11 @@
 """A query agent for the new, other people trending topics etc"""
+
 import twooter.sdk
 import requests
 from typing import List
 from bs4 import BeautifulSoup
 import random
+
 
 class QueryAgent:
     def __init__(self, account_provider):
@@ -14,62 +16,60 @@ class QueryAgent:
         self.query.feed("trending")
 
     def get_random_news_article(self) -> str:
-        site_url = 'https://kingston-herald.legitreal.com'
-        url = 'https://kingston-herald.legitreal.com/index.html'
+        site_url = "https://kingston-herald.legitreal.com"
+        url = "https://kingston-herald.legitreal.com/index.html"
         response = requests.get(url)
         html_content = response.content
-        soup = BeautifulSoup(html_content, 'html.parser')  # Use built-in parser instead of lxml
+        soup = BeautifulSoup(
+            html_content, "html.parser"
+        )  # Use built-in parser instead of lxml
 
         # Find all <a> tags where the href attribute starts with "/post"
         post_links = soup.select('a[href^="/post"]')
         # Then append it so it gets the full uri not just rel path from website
-        post_links = [site_url + link.get('href') for link in post_links]
+        post_links = [site_url + link.get("href") for link in post_links]
 
-        chosen_link_index = random.randint(0,len(post_links)-1)
+        chosen_link_index = random.randint(0, len(post_links) - 1)
         link = post_links[chosen_link_index]
 
         print(link)
         # Get the content of each article page
         article_response = requests.get(link)
-        article_soup = BeautifulSoup(article_response.content, 'html.parser')
-        paragraphs = article_soup.select('p')
+        article_soup = BeautifulSoup(article_response.content, "html.parser")
+        paragraphs = article_soup.select("p")
         article = ""
         for paragraph in paragraphs:
             article += "\n" + paragraph.get_text()
-        
+
         return article
 
     def get_news(self) -> List[str]:
-        site_url = 'https://kingston-herald.legitreal.com'
-        url = 'https://kingston-herald.legitreal.com/index.html'
+        site_url = "https://kingston-herald.legitreal.com"
+        url = "https://kingston-herald.legitreal.com/index.html"
         response = requests.get(url)
         html_content = response.content
-        soup = BeautifulSoup(html_content, 'html.parser')  # Use built-in parser instead of lxml
+        soup = BeautifulSoup(
+            html_content, "html.parser"
+        )  # Use built-in parser instead of lxml
         articles = []
 
         # Find all <a> tags where the href attribute starts with "/post"
         post_links = soup.select('a[href^="/post"]')
         # Then append it so it gets the full uri not just path
-        post_links = [site_url + link.get('href') for link in post_links]
+        post_links = [site_url + link.get("href") for link in post_links]
 
         for link in post_links:
             print(link)
             # Get the content of each article page
             article_response = requests.get(link)
-            article_soup = BeautifulSoup(article_response.content, 'html.parser')
-            paragraphs = article_soup.select('p')
+            article_soup = BeautifulSoup(article_response.content, "html.parser")
+            paragraphs = article_soup.select("p")
             article = ""
             for paragraph in paragraphs:
                 article += "\n" + paragraph.get_text()
             articles.append(article.strip())
-        
+
         return articles
-
-
-            
-
-        
-
 
 
 """

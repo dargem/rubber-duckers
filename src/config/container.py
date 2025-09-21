@@ -5,6 +5,7 @@ from src.bots import BasicBot, ViralBot, NewsBot, ResponseBot
 from src.tweeter import TweeterClient, QueryAgent
 from src.account_providers import AccountProvider
 
+
 class Container:
     """Dependency injection container using a registry of providers."""
 
@@ -35,17 +36,12 @@ class Container:
         self._providers[AccountProvider] = lambda c: AccountProvider()
 
         # Bots Here
-        self._providers[BasicBot] = lambda c: BasicBot(
-            llm_provider=c.get(LLMProvider)
-        )
+        self._providers[BasicBot] = lambda c: BasicBot(llm_provider=c.get(LLMProvider))
 
-        self._providers[ViralBot] = lambda c: ViralBot(
-            llm_provider=c.get(LLMProvider)
-        )
+        self._providers[ViralBot] = lambda c: ViralBot(llm_provider=c.get(LLMProvider))
 
         self._providers[NewsBot] = lambda c: NewsBot(
-            llm_provider=c.get(LLMProvider),
-            query_agent=c.get(QueryAgent)
+            llm_provider=c.get(LLMProvider), query_agent=c.get(QueryAgent)
         )
 
         self._providers[ResponseBot] = lambda c: ResponseBot(
@@ -66,7 +62,6 @@ class Container:
         account_provider = container.get(AccountProvider)
         return QueryAgent(account_provider=account_provider)
 
-
     def get(self, key: Any):
         """Generic resolver with caching."""
         if key in self._instances:
@@ -76,7 +71,7 @@ class Container:
         instance = self._providers[key](self)
         self._instances[key] = instance
         return instance
-    
+
     async def health_check(self):
         """Check health of core services."""
         results = {}
@@ -89,7 +84,7 @@ class Container:
 
         # TODO: Add other health checks as services are added
         # try:
-        #     twooter = self.get(TwooterClient)  
+        #     twooter = self.get(TwooterClient)
         #     results["twooter"] = await twooter.health_check()
         # except Exception as e:
         #     results["twooter"] = False

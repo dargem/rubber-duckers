@@ -4,10 +4,11 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage
 from textwrap import dedent
 
+
 class BasicBot(Bot):
     """A basic bot that generates pro republican posts"""
 
-    def __init__(self,llm_provider: LLMProvider):
+    def __init__(self, llm_provider: LLMProvider):
         """
         Args:
             LLM Provider interface for llms
@@ -163,4 +164,3 @@ class BasicBot(Bot):
         else:
             print("bot did a too long response, remaking")
             return await self.run_bot()
-

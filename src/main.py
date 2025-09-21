@@ -21,18 +21,18 @@ async def setup_container():
         # Load configuration
         config = load_config()
         logger.info(f"Loaded config for environment: {config.environment}")
-        
+
         # Set log level from config
         logging.getLogger().setLevel(getattr(logging, config.log_level))
-        
+
         # Initialize container (lazy load to avoid circular imports)
         Container = get_container()
         container = Container()
         await container.set_config(config)
-        
+
         logger.info("Container initialized successfully")
         return container
-        
+
     except Exception as e:
         logger.error(f"Failed to setup container: {e}")
         logger.info("Creating example config file...")
@@ -42,28 +42,28 @@ async def setup_container():
 async def test_llm_integration(container) -> None:
     """Test the LLM integration with key rotation."""
     logger.info("Testing LLM integration...")
-    
+
     try:
         # Get the LLM provider (will be the appropriate one based on config)
         llm_provider = container.get(LLMProvider)
-        
+
         # Check health
         is_healthy = await llm_provider.health_check()
         logger.info(f"LLM provider health: {is_healthy}")
-        
+
         if not is_healthy:
             logger.error("LLM provider is not healthy")
             return
-        
+
         # Test a simple invocation
         test_messages = [HumanMessage(content="Say hello in exactly 5 words.")]
         response = await llm_provider.invoke(test_messages)
         logger.info(f"LLM response: {response}")
-        
+
         # Get stats
         stats = await container.get_stats()
         logger.info(f"Container stats: {stats}")
-        
+
     except Exception as e:
         logger.error(f"LLM integration test failed: {e}")
         raise
@@ -72,7 +72,7 @@ async def test_llm_integration(container) -> None:
 async def run_bot():
     """Main bot entry point."""
     logger.info("Starting bot...")
-    
+
     try:
         # Setup dependency injection
         container = await setup_container()
@@ -80,13 +80,13 @@ async def run_bot():
         print("testing integration")
         await test_llm_integration(container)
         print("llm tested")
-        
+
         logger.info("Bot setup complete")
 
-        basic_bot:Bot = container.get(BasicBot)
-        viral_bot:Bot = container.get(ViralBot)
-        news_bot:Bot = container.get(NewsBot)
-        response_bot:Bot = container.get(ResponseBot)
+        basic_bot: Bot = container.get(BasicBot)
+        viral_bot: Bot = container.get(ViralBot)
+        news_bot: Bot = container.get(NewsBot)
+        response_bot: Bot = container.get(ResponseBot)
         logger.info("Bot instance created successfully")
         tweeter: TweeterClient = container.get(TweeterClient)
         logger.info("TweeterClient instance created successfully")
@@ -94,7 +94,7 @@ async def run_bot():
         post_count = 0
         while True:
             try:
-                rand = random.randint(0,2)
+                rand = random.randint(0, 2)
                 if rand == 0:
                     print("running normal")
                     bot = basic_bot
@@ -105,19 +105,20 @@ async def run_bot():
                     print("running news bot")
                     bot = news_bot
 
-                
                 post_count += 1
                 logger.info(f"Starting post generation #{post_count}")
-                
+
                 propaganda = await bot.run_bot()
                 logger.info(f"Content generated ({len(propaganda)} chars)")
-                
+
                 post_id = await tweeter.make_post(propaganda)
                 logger.info(f"Post #{post_count} successful! Post ID: {post_id}")
 
                 for i in range(2):
                     sleep_time = 50 + random.randrange(-20, 20)
-                    logger.info(f"Sleeping for {sleep_time} seconds until next reply...")
+                    logger.info(
+                        f"Sleeping for {sleep_time} seconds until next reply..."
+                    )
                     time.sleep(sleep_time)
                     print("making a reply")
 
@@ -135,16 +136,16 @@ async def run_bot():
                 sleep_time = 50 + random.randrange(-20, 20)
                 logger.info(f"Sleeping for {sleep_time} seconds until next post...")
                 time.sleep(sleep_time)
-                
+
             except Exception as e:
                 logger.error(f"Post #{post_count} failed: {e}")
                 logger.info("Retrying in 20 seconds...")
                 time.sleep(10)
-        
+
     except Exception as e:
         logger.error(f"Bot startup failed: {e}")
         return 1
-    
+
     return 0
 
 

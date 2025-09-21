@@ -8,9 +8,10 @@ from twooter import Twooter
 from time import sleep
 import random
 
-class AccountProvider():
+
+class AccountProvider:
     def __init__(self):
-        #loads bots
+        # loads bots
         self.person_index = 0
 
         # Load bot accounts from bots.json
@@ -21,21 +22,23 @@ class AccountProvider():
         invite_code = self._load_invite_code_from_env()
         if not invite_code:
             raise ValueError("No INVITE_CODE found in .env file")
-        
+
         # Create bot instances from bots.json data
         bots_data = data["bots"]
         print("logging into accounts")
         self._bots = []
         for bot_data in bots_data:
-            if all(key in bot_data for key in ["user_name", "password", "display_name"]):
+            if all(
+                key in bot_data for key in ["user_name", "password", "display_name"]
+            ):
                 tweeter = twooter.sdk.new()
-                while True :
+                while True:
                     try:
                         login_result = tweeter.login(
-                            username=bot_data["user_name"], 
-                            password=bot_data["password"], 
+                            username=bot_data["user_name"],
+                            password=bot_data["password"],
                             display_name=bot_data["display_name"],
-                            invite_code=invite_code
+                            invite_code=invite_code,
                         )
                         break
                     except:
@@ -44,12 +47,16 @@ class AccountProvider():
                 # Store the tweeter instance, not the login result
                 self._bots.append(tweeter)
             else:
-                print(f"Warning: Bot entry missing required fields (user_name, password, display_name): {bot_data}")
-        
+                print(
+                    f"Warning: Bot entry missing required fields (user_name, password, display_name): {bot_data}"
+                )
+
         if not self._bots:
             raise ValueError("No valid bot entries found in bots.json")
-            
-        print(f"Loaded {len(self._bots)} bot accounts from bots.json with invite code from .env")
+
+        print(
+            f"Loaded {len(self._bots)} bot accounts from bots.json with invite code from .env"
+        )
 
     def _load_invite_code_from_env(self) -> Optional[str]:
         """Load invite code from .env file."""
@@ -58,26 +65,27 @@ class AccountProvider():
             return None
 
         try:
-            with open(env_file, 'r', encoding='utf-8') as f:
+            with open(env_file, "r", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
-                    if not line or line.startswith('#') or '=' not in line:
+                    if not line or line.startswith("#") or "=" not in line:
                         continue
-                    
-                    key, value = line.split('=', 1)
+
+                    key, value = line.split("=", 1)
                     key = key.strip()
                     value = value.strip()
-                    
+
                     # Remove surrounding quotes if present
-                    if (value.startswith('"') and value.endswith('"')) or \
-                       (value.startswith("'") and value.endswith("'")):
+                    if (value.startswith('"') and value.endswith('"')) or (
+                        value.startswith("'") and value.endswith("'")
+                    ):
                         value = value[1:-1]
-                    
+
                     if key == "INVITE_CODE":
                         return value
         except Exception as e:
             print(f"Error reading .env file: {e}")
-        
+
         return None
 
     def get_account(self) -> Twooter:
@@ -86,26 +94,24 @@ class AccountProvider():
             self.person_index = 0
         else:
             self.person_index += 1
-        
+
         return self._bots[self.person_index]
-    
+
     def get_random_accounts(self, num_acc: int = 1) -> List[Twooter]:
         """Gets multiple unique random accounts, excluding the current one."""
         if num_acc <= 0:
             return []
-        
+
         available_bots = [
             bot for i, bot in enumerate(self._bots) if i != self.person_index
         ]
 
         num_to_sample = min(num_acc, len(available_bots))
         return random.sample(available_bots, k=num_to_sample)
-        
-    
+
     def get_all_accounts(self) -> List[Twooter]:
         """Returns all of them"""
         return self._bots
-
 
     def get_current_account_info(self) -> str:
         """Get info about current account for logging."""

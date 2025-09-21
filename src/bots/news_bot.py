@@ -5,10 +5,11 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage
 from textwrap import dedent
 
+
 class NewsBot(Bot):
     """A basic bot that generates pro republican posts, will make it using trending topics WIP"""
 
-    def __init__(self,llm_provider: LLMProvider, query_agent: QueryAgent):
+    def __init__(self, llm_provider: LLMProvider, query_agent: QueryAgent):
         """
         Args:
             LLM Provider interface for llms
@@ -173,4 +174,3 @@ class NewsBot(Bot):
         else:
             print("bot did a too long response, remaking")
             return await self.run_bot()
-

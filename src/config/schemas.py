@@ -14,7 +14,7 @@ class LLMConfig(BaseModel):
     api_keys: List[str] = Field(min_items=1)
     max_requests_per_key: int = Field(default=15, ge=1, le=100)
 
-    #TODO actually add these
+    # TODO actually add these
     @field_validator("provider_type")
     def validate_provider_type(cls, v):
         allowed_providers = ["google", "openai", "anthropic", "ollama"]
@@ -32,7 +32,7 @@ class LLMConfig(BaseModel):
     def validate_model_name(cls, v):
         allowed_models = [
             "gemini-2.5-pro",
-            "gemini-2.5-flash", 
+            "gemini-2.5-flash",
             "gemini-2.5-flash-lite",
             "gemini-2.0-flash",
             "gemini-2.0-flash-lite",
@@ -50,7 +50,7 @@ class LLMConfig(BaseModel):
 
 class UserConfig(BaseModel):
     """Configuration for the user account (from .env)."""
-    
+
     display_name: str = Field(..., min_length=1)
     email: Optional[str] = Field(default=None)
     password: Optional[str] = Field(default=None)
@@ -83,4 +83,6 @@ class AppConfig(BaseModel):
             raise ValueError(f"Log level must be one of: {allowed_levels}")
         return v.upper()
 
-    model_config = {"extra": "ignore"}  # Allow extra fields for AccountProvider migration
+    model_config = {
+        "extra": "ignore"
+    }  # Allow extra fields for AccountProvider migration
