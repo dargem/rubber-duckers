@@ -6,6 +6,7 @@ from pathlib import Path
 import twooter.sdk
 from twooter import Twooter
 from time import sleep
+import random
 
 class AccountProvider():
     def __init__(self):
@@ -87,6 +88,19 @@ class AccountProvider():
             self.person_index += 1
         
         return self._bots[self.person_index]
+    
+    def get_random_accounts(self, num_acc: int = 1) -> List[Twooter]:
+        """Gets multiple unique random accounts, excluding the current one."""
+        if num_acc <= 0:
+            return []
+        
+        available_bots = [
+            bot for i, bot in enumerate(self._bots) if i != self.person_index
+        ]
+
+        num_to_sample = min(num_acc, len(available_bots))
+        return random.sample(available_bots, k=num_to_sample)
+        
     
     def get_all_accounts(self) -> List[Twooter]:
         """Returns all of them"""

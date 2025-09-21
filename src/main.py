@@ -7,7 +7,7 @@ import time
 import random
 from src.config import get_container, load_config
 from src.providers import LLMProvider
-from src.bots import BasicBot, Bot, ViralBot, NewsBot
+from src.bots import BasicBot, Bot, ViralBot, NewsBot, ResponseBot
 from src.tweeter import TweeterClient, QueryAgent
 
 # Configure logging
@@ -86,6 +86,7 @@ async def run_bot():
         basic_bot:Bot = container.get(BasicBot)
         viral_bot:Bot = container.get(ViralBot)
         news_bot:Bot = container.get(NewsBot)
+        response_bot:Bot = container.get(ResponseBot)
         logger.info("Bot instance created successfully")
         tweeter: TweeterClient = container.get(TweeterClient)
         logger.info("TweeterClient instance created successfully")
@@ -113,7 +114,24 @@ async def run_bot():
                 
                 post_id = await tweeter.make_post(propaganda)
                 logger.info(f"Post #{post_count} successful! Post ID: {post_id}")
-                
+
+                for i in range(2):
+                    sleep_time = 50 + random.randrange(-20, 20)
+                    logger.info(f"Sleeping for {sleep_time} seconds until next reply...")
+                    time.sleep(sleep_time)
+                    print("making a reply")
+
+                    while True:
+                        try:
+                            response = await response_bot.run_bot(propaganda)
+                            await tweeter.send_reply(reply=response, post_id=post_id)
+                            break
+                        except:
+                            print("response failed, sleeping 10s")
+                            time.sleep(10)
+
+                    print("reply made")
+
                 sleep_time = 50 + random.randrange(-20, 20)
                 logger.info(f"Sleeping for {sleep_time} seconds until next post...")
                 time.sleep(sleep_time)

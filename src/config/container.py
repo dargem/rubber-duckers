@@ -1,10 +1,9 @@
 from src.providers import APIKeyManager, LLMProvider, LLMProviderFactory
 from . import AppConfig
 from typing import Dict, Any, Callable
-from src.bots import BasicBot, ViralBot, NewsBot
+from src.bots import BasicBot, ViralBot, NewsBot, ResponseBot
 from src.tweeter import TweeterClient, QueryAgent
 from src.account_providers import AccountProvider
-
 
 class Container:
     """Dependency injection container using a registry of providers."""
@@ -47,6 +46,10 @@ class Container:
         self._providers[NewsBot] = lambda c: NewsBot(
             llm_provider=c.get(LLMProvider),
             query_agent=c.get(QueryAgent)
+        )
+
+        self._providers[ResponseBot] = lambda c: ResponseBot(
+            llm_provider=c.get(LLMProvider)
         )
 
         # API access - now uses AccountProvider to get current account
