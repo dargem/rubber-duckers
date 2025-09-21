@@ -1,6 +1,7 @@
 """Loads keys form the json"""
 
 import json
+import asyncio
 from typing import Optional, List
 from pathlib import Path
 import twooter.sdk
@@ -13,7 +14,10 @@ class AccountProvider:
     def __init__(self):
         # loads bots
         self.person_index = 0
+        self._bots = []
 
+    async def initialize(self):
+        """Async initialization method that loads and logs in all bots."""
         # Load bot accounts from bots.json
         with open("bots.json", "r") as f:
             data = json.load(f)
@@ -26,37 +30,49 @@ class AccountProvider:
         # Create bot instances from bots.json data
         bots_data = data["bots"]
         print("logging into accounts")
-        self._bots = []
+        
+        # Create list of valid bot data
+        valid_bot_data = []
         for bot_data in bots_data:
             if all(
                 key in bot_data for key in ["user_name", "password", "display_name"]
             ):
-                tweeter = twooter.sdk.new()
-                while True:
-                    try:
-                        login_result = tweeter.login(
-                            username=bot_data["user_name"],
-                            password=bot_data["password"],
-                            display_name=bot_data["display_name"],
-                            invite_code=invite_code,
-                        )
-                        break
-                    except:
-                        sleep(10)
-
-                # Store the tweeter instance, not the login result
-                self._bots.append(tweeter)
+                valid_bot_data.append(bot_data)
             else:
                 print(
                     f"Warning: Bot entry missing required fields (user_name, password, display_name): {bot_data}"
                 )
 
-        if not self._bots:
+        if not valid_bot_data:
             raise ValueError("No valid bot entries found in bots.json")
+
+        # Login to all bots concurrently
+        login_tasks = [
+            self._login_bot(bot_data, invite_code) for bot_data in valid_bot_data
+        ]
+        self._bots = await asyncio.gather(*login_tasks)
 
         print(
             f"Loaded {len(self._bots)} bot accounts from bots.json with invite code from .env"
         )
+
+    async def _login_bot(self, bot_data: dict, invite_code: str) -> Twooter:
+        """Login to a single bot account with retry logic."""
+        tweeter = twooter.sdk.new()
+        while True:
+            try:
+                login_result = tweeter.login(
+                    username=bot_data["user_name"],
+                    password=bot_data["password"],
+                    display_name=bot_data["display_name"],
+                    invite_code=invite_code,
+                )
+                break
+            except Exception as e:
+                print(f"Login failed for {bot_data['user_name']}, retrying in 10 seconds: {e}")
+                await asyncio.sleep(20)
+        
+        return tweeter
 
     def _load_invite_code_from_env(self) -> Optional[str]:
         """Load invite code from .env file."""

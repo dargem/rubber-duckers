@@ -32,8 +32,8 @@ class Container:
             api_key_manager=c.get(APIKeyManager),
         )
 
-        # Account provider for managing multiple bot accounts
-        self._providers[AccountProvider] = lambda c: AccountProvider()
+        # Account provider for managing multiple bot accounts (async initialization)
+        self._providers[AccountProvider] = lambda c: self._create_account_provider_sync(c)
 
         # Bots Here
         self._providers[BasicBot] = lambda c: BasicBot(llm_provider=c.get(LLMProvider))
@@ -49,17 +49,47 @@ class Container:
         )
 
         # API access - now uses AccountProvider to get current account
-        self._providers[TweeterClient] = lambda c: self._create_tweeter_client(c)
-        self._providers[QueryAgent] = lambda c: self._create_query_agent(c)
+        self._providers[TweeterClient] = lambda c: self._create_tweeter_client_sync(c)
+        self._providers[QueryAgent] = lambda c: self._create_query_agent_sync(c)
 
-    def _create_tweeter_client(self, container):
-        """Create TweeterClient with AccountProvider."""
-        account_provider = container.get(AccountProvider)
+    async def _create_account_provider(self, container):
+        """Create AccountProvider and initialize it asynchronously."""
+        account_provider = AccountProvider()
+        await account_provider.initialize()
+        return account_provider
+
+    def _create_account_provider_sync(self, container):
+        """Sync wrapper for creating AccountProvider - raises error if not initialized async first."""
+        if AccountProvider not in self._instances:
+            raise RuntimeError("AccountProvider must be initialized asynchronously. Use get_async(AccountProvider) first.")
+        return self._instances[AccountProvider]
+
+    def _create_tweeter_client_sync(self, container):
+        """Sync wrapper for creating TweeterClient."""
+        if TweeterClient not in self._instances:
+            # We need to ensure AccountProvider is initialized first
+            if AccountProvider not in self._instances:
+                raise RuntimeError("AccountProvider must be initialized before TweeterClient. Use get_async(AccountProvider) first.")
+        account_provider = self._instances[AccountProvider]
         return TweeterClient(account_provider=account_provider)
 
-    def _create_query_agent(self, container):
+    def _create_query_agent_sync(self, container):
+        """Sync wrapper for creating QueryAgent."""
+        if QueryAgent not in self._instances:
+            # We need to ensure AccountProvider is initialized first
+            if AccountProvider not in self._instances:
+                raise RuntimeError("AccountProvider must be initialized before QueryAgent. Use get_async(AccountProvider) first.")
+        account_provider = self._instances[AccountProvider]
+        return QueryAgent(account_provider=account_provider)
+
+    async def _create_tweeter_client(self, container):
+        """Create TweeterClient with AccountProvider."""
+        account_provider = await container.get_async(AccountProvider)
+        return TweeterClient(account_provider=account_provider)
+
+    async def _create_query_agent(self, container):
         """Create QueryAgent with AccountProvider."""
-        account_provider = container.get(AccountProvider)
+        account_provider = await container.get_async(AccountProvider)
         return QueryAgent(account_provider=account_provider)
 
     def get(self, key: Any):
@@ -69,6 +99,36 @@ class Container:
         if key not in self._providers:
             raise ValueError(f"No provider registered for {key}")
         instance = self._providers[key](self)
+        self._instances[key] = instance
+        return instance
+
+    async def get_async(self, key: Any):
+        """Async resolver for services that require async initialization."""
+        if key in self._instances:
+            return self._instances[key]
+        if key not in self._providers:
+            raise ValueError(f"No provider registered for {key}")
+        
+        if key == AccountProvider:
+            instance = await self._create_account_provider(self)
+        elif key == TweeterClient:
+            # Ensure AccountProvider is initialized first
+            await self.get_async(AccountProvider)
+            instance = await self._create_tweeter_client(self)
+        elif key == QueryAgent:
+            # Ensure AccountProvider is initialized first
+            await self.get_async(AccountProvider)
+            instance = await self._create_query_agent(self)
+        elif key == NewsBot:
+            # NewsBot requires QueryAgent which needs async initialization
+            query_agent = await self.get_async(QueryAgent)
+            instance = NewsBot(
+                llm_provider=self.get(LLMProvider), 
+                query_agent=query_agent
+            )
+        else:
+            instance = self._providers[key](self)
+        
         self._instances[key] = instance
         return instance
 

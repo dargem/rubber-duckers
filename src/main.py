@@ -85,10 +85,11 @@ async def run_bot():
 
         basic_bot: Bot = container.get(BasicBot)
         viral_bot: Bot = container.get(ViralBot)
-        news_bot: Bot = container.get(NewsBot)
+        # NewsBot requires async initialization due to QueryAgent dependency
+        news_bot: Bot = await container.get_async(NewsBot)
         response_bot: Bot = container.get(ResponseBot)
         logger.info("Bot instance created successfully")
-        tweeter: TweeterClient = container.get(TweeterClient)
+        tweeter: TweeterClient = await container.get_async(TweeterClient)
         logger.info("TweeterClient instance created successfully")
 
         post_count = 0
@@ -115,7 +116,7 @@ async def run_bot():
                 logger.info(f"Post #{post_count} successful! Post ID: {post_id}")
 
                 for i in range(2):
-                    sleep_time = 50 + random.randrange(-20, 20)
+                    sleep_time = 20
                     logger.info(
                         f"Sleeping for {sleep_time} seconds until next reply..."
                     )
@@ -133,13 +134,13 @@ async def run_bot():
 
                     print("reply made")
 
-                sleep_time = 50 + random.randrange(-20, 20)
+                sleep_time = 20
                 logger.info(f"Sleeping for {sleep_time} seconds until next post...")
                 time.sleep(sleep_time)
 
             except Exception as e:
                 logger.error(f"Post #{post_count} failed: {e}")
-                logger.info("Retrying in 20 seconds...")
+                logger.info("Retrying in 10 seconds...")
                 time.sleep(10)
 
     except Exception as e:
