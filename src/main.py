@@ -112,8 +112,10 @@ async def run_bot():
                 propaganda = await bot.run_bot()
                 logger.info(f"Content generated ({len(propaganda)} chars)")
 
-                post_id = await tweeter.make_post(propaganda)
-                logger.info(f"Post #{post_count} successful! Post ID: {post_id}")
+                all_post_tuples = []
+                post_id_tuple = await tweeter.make_post(propaganda)
+                logger.info(f"Post #{post_count} successful! Post ID: {post_id_tuple}")
+                all_post_tuples.append(post_id_tuple)
 
                 for i in range(2):
                     sleep_time = 20
@@ -126,13 +128,21 @@ async def run_bot():
                     while True:
                         try:
                             response = await response_bot.run_bot(propaganda)
-                            await tweeter.send_reply(reply=response, post_id=post_id)
+                            reply_id_tuple = await tweeter.send_reply(reply=response, post_id=post_id_tuple[0])
+                            all_post_tuples.append(reply_id_tuple)
                             break
                         except:
                             print("response failed, sleeping 10s")
                             time.sleep(10)
 
                     print("reply made")
+                
+                print("liking and retweeting whole chain")
+                for post_id_tuple in all_post_tuples:
+                    print(f"like+retweet {post_id_tuple[0]}")
+                    await tweeter.like_and_retweet_with_all_accounts(post_id=post_id_tuple[0], posting_account_username=post_id_tuple[1])
+                    print(f"finished like+retweeting of {post_id_tuple[0]}")
+
 
                 sleep_time = 20
                 logger.info(f"Sleeping for {sleep_time} seconds until next post...")
